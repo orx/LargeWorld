@@ -5,9 +5,8 @@
 
 #include "orx.h"
 
+orxVECTOR   PreviousCameraPos;
 orxOBJECT **Grid;
-orxVECTOR   PreviousPosition;
-orxCAMERA  *Camera;
 orxS32      CellCount;
 
 /** Update function, it has been registered to be called every tick of the core clock
@@ -15,6 +14,7 @@ orxS32      CellCount;
 void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
 {
     // Update camera
+    orxCAMERA *Camera = orxCamera_Get("MainCamera");
     orxVECTOR CameraMove, CameraSpeed, CameraPos;
     orxVector_Mulf(&CameraMove,
                    orxVector_Mul(&CameraMove,
@@ -28,16 +28,18 @@ void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
                                                 orxCamera_GetPosition(Camera, &CameraPos),
                                                 &CameraMove));
 
-    // Get grid position
-    orxVECTOR   GridPos;
-    orxFLOAT    CellSize = orxConfig_GetFloat("CellSize");
+    // Get grid positions
+    orxVECTOR GridPos, PreviousGridPos;
+    orxFLOAT  CellSize = orxConfig_GetFloat("CellSize");
     orxVector_Round(&GridPos, orxVector_Divf(&GridPos, &CameraPos, CellSize));
+    orxVector_Round(&PreviousGridPos, orxVector_Divf(&PreviousGridPos, &PreviousCameraPos, CellSize));
 
-    // Create/Enable neighbor cells
+    // For all neighboring cells
     for(orxS32 i = -1; i <= 1; i++)
     {
         for(orxS32 j = -1; j <= 1; j++)
         {
+            // Create/Enable new neighbor cells
             orxS32 x = orxF2S(GridPos.fX) + i, y = orxF2S(GridPos.fY) + j;
             if((x >= 0) && (x < CellCount) && (y >= 0) && (y < CellCount))
             {
@@ -60,10 +62,27 @@ void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
                     }
                 }
             }
+
+            // Disable out-of-range cells
+            x = orxF2S(PreviousGridPos.fX) + i, y = orxF2S(PreviousGridPos.fY) + j;
+            if((x >= 0) && (x < CellCount) && (y >= 0) && (y < CellCount))
+            {
+                if((x < orxF2S(GridPos.fX) - 1) || (x > orxF2S(GridPos.fX) + 1) || (y < orxF2S(GridPos.fY) - 1) || (y > orxF2S(GridPos.fY) + 1))
+                {
+                    orxOBJECT *Cell = Grid[x + CellCount * y];
+                    orxASSERT(Cell);
+                    orxASSERT(orxObject_IsEnabled(Cell));
+
+                    // De-activate it
+                    orxObject_EnableRecursive(Cell, orxFALSE);
+                    orxObject_SetGroupIDRecursive(Cell, orxString_GetID("none"));
+                }
+            }
         }
     }
 
-    //! TODO: Go over "old" neighbor cells and deactivate the ones that don't overlap (by looking around current gridpos)
+    // Update previous  camera position
+    orxVector_Copy(&PreviousCameraPos, &CameraPos);
 
     // Should quit?
     if(orxInput_IsActive("Quit"))
@@ -71,6 +90,14 @@ void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
         // Send close event
         orxEvent_SendShort(orxEVENT_TYPE_SYSTEM, orxSYSTEM_EVENT_CLOSE);
     }
+}
+
+static orxSTATUS orxFASTCALL EventHandler(const orxEVENT *_pstEvent)
+{
+    // Sets cell as spawned object's owner
+    orxObject_SetOwner(orxOBJECT(_pstEvent->hRecipient), orxStructure_GetOwner(_pstEvent->hSender));
+
+    return orxSTATUS_SUCCESS;
 }
 
 /** Init function, it is called when all orx's modules have been initialized
@@ -83,14 +110,14 @@ orxSTATUS orxFASTCALL Init()
     // Sets default config section to "World"
     orxConfig_PushSection("World");
 
-    // Inits grid
+    // Init our world grid
     CellCount = orxConfig_GetS32("CellCount");
     Grid = (orxOBJECT **)orxMemory_Allocate(CellCount * CellCount * sizeof(orxOBJECT **), orxMEMORY_TYPE_MAIN);
     orxMemory_Zero(Grid, CellCount * CellCount * sizeof(orxOBJECT **));
 
-    // Inits the camera
-    Camera = orxCamera_Get("MainCamera");
-    orxCamera_GetPosition(Camera, &PreviousPosition);
+    // Init the camera
+    orxCAMERA *Camera = orxCamera_Get("MainCamera");
+    orxCamera_GetPosition(Camera, &PreviousCameraPos);
 
     // Create the scene
     orxObject_CreateFromConfig("Scene");
@@ -98,7 +125,9 @@ orxSTATUS orxFASTCALL Init()
     // Register the Update function to the core clock
     orxClock_Register(orxClock_Get(orxCLOCK_KZ_CORE), Update, orxNULL, orxMODULE_ID_MAIN, orxCLOCK_PRIORITY_NORMAL);
 
-    //! TODO: Register even listener to set cell as owner of spawned objects
+    // Register event handler to set the cell as owner of spawned objects
+    orxEvent_AddHandler(orxEVENT_TYPE_SPAWNER, &EventHandler);
+    orxEvent_SetHandlerIDFlags(&EventHandler, orxEVENT_TYPE_SPAWNER, orxNULL, orxEVENT_GET_FLAG(orxSPAWNER_EVENT_SPAWN), orxEVENT_KU32_MASK_ID_ALL);
 
     // Done!
     return orxSTATUS_SUCCESS;
