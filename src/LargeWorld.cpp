@@ -25,7 +25,7 @@ void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
                    _pstClockInfo->fDT);
     orxCamera_SetPosition(Camera, orxVector_Add(&CameraPos,
                                                 orxCamera_GetPosition(Camera, &CameraPos),
-                                                &CameraMove));
+                                                orxVector_Round(&CameraMove, &CameraMove)));
 
     // Get grid positions
     orxVECTOR GridPos, PreviousGridPos;
