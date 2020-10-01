@@ -5,9 +5,8 @@
 
 #include "orx.h"
 
-orxVECTOR   PreviousCameraPos;
-orxOBJECT **Grid;
-orxS32      CellCount;
+orxVECTOR     PreviousCameraPos;
+orxHASHTABLE *pstWorldTable;
 
 /** Update function, it has been registered to be called every tick of the core clock
  */
@@ -40,43 +39,40 @@ void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
         for(orxS32 j = -1; j <= 1; j++)
         {
             // Create/Enable new neighbor cells
-            orxS32 x = orxF2S(GridPos.fX) + i, y = orxF2S(GridPos.fY) + j;
-            if((x >= 0) && (x < CellCount) && (y >= 0) && (y < CellCount))
+            orxS32 x          = orxF2S(GridPos.fX) + i, y = orxF2S(GridPos.fY) + j;
+            orxU64 u64CellID  = ((orxU64)x << 32) | (orxU32)y;
+            orxOBJECT *Cell   = (orxOBJECT *)orxHashTable_Get(pstWorldTable, u64CellID);
+            if(!Cell)
             {
-                orxOBJECT *Cell = Grid[x + CellCount * y];
-                if(Cell == orxNULL)
+                // Create new node
+                orxVECTOR Pos;
+                Cell = orxObject_CreateFromConfig("Cell");
+                orxObject_SetPosition(Cell, orxVector_Set(&Pos, CellSize * orxS2F(x), CellSize * orxS2F(y), orxFLOAT_0));
+                orxHashTable_Add(pstWorldTable, u64CellID, (void *)Cell);
+            }
+            else
+            {
+                // Wasn't node enabled?
+                if(!orxObject_IsEnabled(Cell))
                 {
-                    // Create new node
-                    orxVECTOR Pos;
-                    Grid[x + CellCount * y] = Cell = orxObject_CreateFromConfig("Cell");
-                    orxObject_SetPosition(Cell, orxVector_Set(&Pos, CellSize * orxS2F(x), CellSize * orxS2F(y), orxFLOAT_0));
-                }
-                else
-                {
-                    // Wasn't node enabled?
-                    if(!orxObject_IsEnabled(Cell))
-                    {
-                        // Re-activate it
-                        orxObject_EnableRecursive(Cell, orxTRUE);
-                        orxObject_SetGroupIDRecursive(Cell, orxString_GetID("default"));
-                    }
+                    // Re-activate it
+                    orxObject_EnableRecursive(Cell, orxTRUE);
+                    orxObject_SetGroupIDRecursive(Cell, orxString_GetID("default"));
                 }
             }
 
             // Disable out-of-range cells
-            x = orxF2S(PreviousGridPos.fX) + i, y = orxF2S(PreviousGridPos.fY) + j;
-            if((x >= 0) && (x < CellCount) && (y >= 0) && (y < CellCount))
+            x          = orxF2S(PreviousGridPos.fX) + i, y = orxF2S(PreviousGridPos.fY) + j;
+            u64CellID  = ((orxU64)x << 32) | (orxU32)y;
+            if((x < orxF2S(GridPos.fX) - 1) || (x > orxF2S(GridPos.fX) + 1) || (y < orxF2S(GridPos.fY) - 1) || (y > orxF2S(GridPos.fY) + 1))
             {
-                if((x < orxF2S(GridPos.fX) - 1) || (x > orxF2S(GridPos.fX) + 1) || (y < orxF2S(GridPos.fY) - 1) || (y > orxF2S(GridPos.fY) + 1))
-                {
-                    orxOBJECT *Cell = Grid[x + CellCount * y];
-                    orxASSERT(Cell);
-                    orxASSERT(orxObject_IsEnabled(Cell));
+                Cell = (orxOBJECT *)orxHashTable_Get(pstWorldTable, u64CellID);
+                orxASSERT(Cell);
+                orxASSERT(orxObject_IsEnabled(Cell));
 
-                    // De-activate it
-                    orxObject_EnableRecursive(Cell, orxFALSE);
-                    orxObject_SetGroupIDRecursive(Cell, orxString_GetID("none"));
-                }
+                // De-activate it
+                orxObject_EnableRecursive(Cell, orxFALSE);
+                orxObject_SetGroupIDRecursive(Cell, orxString_GetID("none"));
             }
         }
     }
@@ -110,10 +106,8 @@ orxSTATUS orxFASTCALL Init()
     // Sets default config section to "World"
     orxConfig_PushSection("World");
 
-    // Init our world grid
-    CellCount = orxConfig_GetS32("CellCount");
-    Grid = (orxOBJECT **)orxMemory_Allocate(CellCount * CellCount * sizeof(orxOBJECT **), orxMEMORY_TYPE_MAIN);
-    orxMemory_Zero(Grid, CellCount * CellCount * sizeof(orxOBJECT **));
+    // Init our world
+    pstWorldTable = orxHashTable_Create(1024, orxHASHTABLE_KU32_FLAG_NONE, orxMEMORY_TYPE_MAIN);
 
     // Init the camera
     orxCAMERA *Camera = orxCamera_Get("MainCamera");
