@@ -57,7 +57,6 @@ void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
                 {
                     // Re-activate it
                     orxObject_EnableRecursive(Cell, orxTRUE);
-                    orxObject_SetGroupIDRecursive(Cell, orxString_GetID("default"));
                 }
             }
 
@@ -72,7 +71,6 @@ void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
 
                 // De-activate it
                 orxObject_EnableRecursive(Cell, orxFALSE);
-                orxObject_SetGroupIDRecursive(Cell, orxString_GetID("none"));
             }
         }
     }
