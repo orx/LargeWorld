@@ -21,7 +21,7 @@ void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
                                                orxInput_GetValue("Right") - orxInput_GetValue("Left"),
                                                orxInput_GetValue("Down") - orxInput_GetValue("Up"),
                                                orxFLOAT_0),
-                                 orxConfig_GetVector("CameraSpeed", &CameraSpeed)),
+                                 orxConfig_GetListVector("CameraSpeed", orxInput_IsActive("Fast") ? 1 : 0, &CameraSpeed)),
                    _pstClockInfo->fDT);
     orxObject_SetPosition(Camera, orxVector_Add(&CameraPos,
                                                 orxObject_GetPosition(Camera, &CameraPos),
