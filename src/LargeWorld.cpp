@@ -6,14 +6,14 @@
 #include "orx.h"
 
 orxVECTOR     PreviousCameraPos;
-orxHASHTABLE *pstWorldTable;
+orxOBJECT    *Camera;
+orxHASHTABLE *WorldTable;
 
 /** Update function, it has been registered to be called every tick of the core clock
  */
 void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
 {
     // Update camera
-    orxCAMERA *Camera = orxCamera_Get("MainCamera");
     orxVECTOR CameraMove, CameraSpeed, CameraPos;
     orxVector_Mulf(&CameraMove,
                    orxVector_Mul(&CameraMove,
@@ -23,8 +23,8 @@ void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
                                                orxFLOAT_0),
                                  orxConfig_GetVector("CameraSpeed", &CameraSpeed)),
                    _pstClockInfo->fDT);
-    orxCamera_SetPosition(Camera, orxVector_Add(&CameraPos,
-                                                orxCamera_GetPosition(Camera, &CameraPos),
+    orxObject_SetPosition(Camera, orxVector_Add(&CameraPos,
+                                                orxObject_GetPosition(Camera, &CameraPos),
                                                 orxVector_Round(&CameraMove, &CameraMove)));
 
     // Get grid positions
@@ -39,16 +39,16 @@ void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
         for(orxS32 j = -1; j <= 1; j++)
         {
             // Create/Enable new neighbor cells
-            orxS32 x          = orxF2S(GridPos.fX) + i, y = orxF2S(GridPos.fY) + j;
-            orxU64 u64CellID  = ((orxU64)x << 32) | (orxU32)y;
-            orxOBJECT *Cell   = (orxOBJECT *)orxHashTable_Get(pstWorldTable, u64CellID);
+            orxS32 x        = orxF2S(GridPos.fX) + i, y = orxF2S(GridPos.fY) + j;
+            orxU64 CellID   = ((orxU64)x << 32) | (orxU32)y;
+            orxOBJECT *Cell = (orxOBJECT *)orxHashTable_Get(WorldTable, CellID);
             if(!Cell)
             {
                 // Create new node
                 orxVECTOR Pos;
                 Cell = orxObject_CreateFromConfig("Cell");
                 orxObject_SetPosition(Cell, orxVector_Set(&Pos, CellSize * orxS2F(x), CellSize * orxS2F(y), orxFLOAT_0));
-                orxHashTable_Add(pstWorldTable, u64CellID, (void *)Cell);
+                orxHashTable_Add(WorldTable, CellID, (void *)Cell);
             }
             else
             {
@@ -61,11 +61,11 @@ void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
             }
 
             // Disable out-of-range cells
-            x          = orxF2S(PreviousGridPos.fX) + i, y = orxF2S(PreviousGridPos.fY) + j;
-            u64CellID  = ((orxU64)x << 32) | (orxU32)y;
+            x       = orxF2S(PreviousGridPos.fX) + i, y = orxF2S(PreviousGridPos.fY) + j;
+            CellID  = ((orxU64)x << 32) | (orxU32)y;
             if((x < orxF2S(GridPos.fX) - 1) || (x > orxF2S(GridPos.fX) + 1) || (y < orxF2S(GridPos.fY) - 1) || (y > orxF2S(GridPos.fY) + 1))
             {
-                Cell = (orxOBJECT *)orxHashTable_Get(pstWorldTable, u64CellID);
+                Cell = (orxOBJECT *)orxHashTable_Get(WorldTable, CellID);
                 orxASSERT(Cell);
                 orxASSERT(orxObject_IsEnabled(Cell));
 
@@ -105,11 +105,12 @@ orxSTATUS orxFASTCALL Init()
     orxConfig_PushSection("World");
 
     // Init our world
-    pstWorldTable = orxHashTable_Create(1024, orxHASHTABLE_KU32_FLAG_NONE, orxMEMORY_TYPE_MAIN);
+    WorldTable = orxHashTable_Create(8192, orxHASHTABLE_KU32_FLAG_NONE, orxMEMORY_TYPE_MAIN);
 
     // Init the camera
-    orxCAMERA *Camera = orxCamera_Get("MainCamera");
-    orxCamera_GetPosition(Camera, &PreviousCameraPos);
+    Camera = orxObject_CreateFromConfig("Camera");
+    orxCamera_SetParent(orxCamera_Get("MainCamera"), Camera);
+    orxObject_GetPosition(Camera, &PreviousCameraPos);
 
     // Create the scene
     orxObject_CreateFromConfig("Scene");
