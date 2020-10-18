@@ -27,11 +27,11 @@ void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
                                                 orxObject_GetPosition(Camera, &CameraPos),
                                                 orxVector_Round(&CameraMove, &CameraMove)));
 
-    // Get grid positions
-    orxVECTOR GridPos, PreviousGridPos;
+    // Get cell positions
+    orxVECTOR CellPos, PreviousCellPos;
     orxFLOAT  CellSize = orxConfig_GetFloat("CellSize");
-    orxVector_Round(&GridPos, orxVector_Divf(&GridPos, &CameraPos, CellSize));
-    orxVector_Round(&PreviousGridPos, orxVector_Divf(&PreviousGridPos, &PreviousCameraPos, CellSize));
+    orxVector_Round(&CellPos, orxVector_Divf(&CellPos, &CameraPos, CellSize));
+    orxVector_Round(&PreviousCellPos, orxVector_Divf(&PreviousCellPos, &PreviousCameraPos, CellSize));
 
     // For all neighboring cells
     for(orxS32 i = -1; i <= 1; i++)
@@ -39,7 +39,7 @@ void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
         for(orxS32 j = -1; j <= 1; j++)
         {
             // Create/Enable new neighbor cells
-            orxS32 x        = orxF2S(GridPos.fX) + i, y = orxF2S(GridPos.fY) + j;
+            orxS32 x        = orxF2S(CellPos.fX) + i, y = orxF2S(CellPos.fY) + j;
             orxU64 CellID   = ((orxU64)x << 32) | (orxU32)y;
             orxOBJECT *Cell = (orxOBJECT *)orxHashTable_Get(WorldTable, CellID);
             if(!Cell)
@@ -61,9 +61,9 @@ void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
             }
 
             // Disable out-of-range cells
-            x       = orxF2S(PreviousGridPos.fX) + i, y = orxF2S(PreviousGridPos.fY) + j;
+            x       = orxF2S(PreviousCellPos.fX) + i, y = orxF2S(PreviousCellPos.fY) + j;
             CellID  = ((orxU64)x << 32) | (orxU32)y;
-            if((x < orxF2S(GridPos.fX) - 1) || (x > orxF2S(GridPos.fX) + 1) || (y < orxF2S(GridPos.fY) - 1) || (y > orxF2S(GridPos.fY) + 1))
+            if((x < orxF2S(CellPos.fX) - 1) || (x > orxF2S(CellPos.fX) + 1) || (y < orxF2S(CellPos.fY) - 1) || (y > orxF2S(CellPos.fY) + 1))
             {
                 Cell = (orxOBJECT *)orxHashTable_Get(WorldTable, CellID);
                 orxASSERT(Cell);
