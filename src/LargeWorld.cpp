@@ -78,6 +78,17 @@ void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
     // Update previous  camera position
     orxVector_Copy(&PreviousCameraPos, &CameraPos);
 
+    // Zoom Out?
+    if(orxInput_HasBeenActivated("Zoom"))
+    {
+        orxObject_AddTimeLineTrack(Camera, "ZoomOut");
+    }
+    // Zoom In?
+    else if(orxInput_HasBeenDeactivated("Zoom"))
+    {
+        orxObject_AddTimeLineTrack(Camera, "ZoomIn");
+    }
+
     // Should quit?
     if(orxInput_IsActive("Quit"))
     {
