@@ -14,14 +14,17 @@ orxHASHTABLE *WorldTable;
 void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
 {
     // Update camera
-    orxVECTOR CameraMove, CameraSpeed, CameraPos;
+    orxVECTOR CameraMove, CameraSpeed, CameraHighSpeed, CameraPos;
     orxVector_Mulf(&CameraMove,
                    orxVector_Mul(&CameraMove,
                                  orxVector_Set(&CameraMove,
                                                orxInput_GetValue("Right") - orxInput_GetValue("Left"),
                                                orxInput_GetValue("Down") - orxInput_GetValue("Up"),
                                                orxFLOAT_0),
-                                 orxConfig_GetListVector("CameraSpeed", orxInput_IsActive("Fast") ? 1 : 0, &CameraSpeed)),
+                                 orxVector_Lerp(&CameraSpeed,
+                                                orxConfig_GetListVector("CameraSpeed", 0, &CameraSpeed),
+                                                orxConfig_GetListVector("CameraSpeed", 1, &CameraHighSpeed),
+                                                orxInput_GetValue("Fast"))),
                    _pstClockInfo->fDT);
     orxObject_SetPosition(Camera, orxVector_Add(&CameraPos,
                                                 orxObject_GetPosition(Camera, &CameraPos),
