@@ -89,6 +89,40 @@ void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
         orxObject_AddTimeLineTrack(Camera, "ZoomIn");
     }
 
+    // Snapshot?
+    if(orxInput_HasBeenActivated("Snap"))
+    {
+        // Enable its viewport
+        orxViewport_Enable(orxViewport_Get("SnapViewport"), orxTRUE);
+
+        // Store position
+        orxConfig_PushSection("Runtime");
+        orxConfig_SetVector("SnapPos", &PreviousCameraPos);
+        orxConfig_PopSection();
+
+        // Create flash
+        orxObject_CreateFromConfig("Flash");
+    }
+    else
+    {
+        // Disable its viewport
+        orxViewport_Enable(orxViewport_Get("SnapViewport"), orxFALSE);
+
+        // Recall?
+        if(orxInput_HasBeenActivated("Recall"))
+        {
+            orxVECTOR Pos;
+
+            // Restore position
+            orxConfig_PushSection("Runtime");
+            if(orxConfig_GetVector("SnapPos", &Pos))
+            {
+                orxObject_AddUniqueFX(Camera, "Recall");
+            }
+            orxConfig_PopSection();
+        }
+    }
+
     // Should quit?
     if(orxInput_IsActive("Quit"))
     {
@@ -109,8 +143,9 @@ static orxSTATUS orxFASTCALL EventHandler(const orxEVENT *_pstEvent)
  */
 orxSTATUS orxFASTCALL Init()
 {
-    // Create the viewport
+    // Create the viewports
     orxViewport_CreateFromConfig("MainViewport");
+    orxViewport_Enable(orxViewport_CreateFromConfig("SnapViewport"), orxFALSE);
 
     // Sets default config section to "World"
     orxConfig_PushSection("World");
