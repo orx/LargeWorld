@@ -9,6 +9,17 @@ orxVECTOR     PreviousCameraPos;
 orxOBJECT    *Camera;
 orxHASHTABLE *WorldTable;
 
+// Ask for dedicated GPU, if present
+#ifdef __orxWINDOWS__
+
+extern "C"
+{
+  _declspec(dllexport) orxU32 NvOptimusEnablement                   = 1;
+  _declspec(dllexport) orxU32 AmdPowerXpressRequestHighPerformance  = 1;
+}
+
+#endif // __orxWINDOWS__
+
 /** Update function, it has been registered to be called every tick of the core clock
  */
 void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
