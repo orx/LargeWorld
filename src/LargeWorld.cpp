@@ -8,6 +8,7 @@
 orxVECTOR     PreviousCameraPos;
 orxOBJECT    *Camera;
 orxHASHTABLE *WorldTable;
+orxS32        Settings;
 
 // Ask for dedicated GPU, if present
 #ifdef __orxWINDOWS__
@@ -19,6 +20,22 @@ extern "C"
 }
 
 #endif // __orxWINDOWS__
+
+/** Apply settings
+ */
+void orxFASTCALL ApplySettings()
+{
+    orxOBJECT *Cell;
+    orxConfig_SetParent("World", orxConfig_GetListString("Settings", Settings));
+    orxConfig_GetString("UpdateSettings");
+    for(orxHANDLE Iterator = orxHashTable_GetNext(WorldTable, orxHANDLE_UNDEFINED, orxNULL, (void **)&Cell);
+        Iterator != orxHANDLE_UNDEFINED;
+        Iterator = orxHashTable_GetNext(WorldTable, Iterator, orxNULL, (void **)&Cell))
+    {
+        orxObject_Delete(Cell);
+    }
+    orxHashTable_Clear(WorldTable);
+}
 
 /** Update function, it has been registered to be called every tick of the core clock
  */
@@ -40,6 +57,17 @@ void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
     orxObject_SetPosition(Camera, orxVector_Add(&CameraPos,
                                                 orxObject_GetPosition(Camera, &CameraPos),
                                                 orxVector_Round(&CameraMove, &CameraMove)));
+
+    // Change settings
+    if (orxInput_HasBeenActivated("CycleUp") || orxInput_HasBeenActivated("CycleDown"))
+    {
+        orxS32 NewSettings = orxInput_IsActive("CycleUp") ? orxMIN(Settings + 1, orxConfig_GetListCount("Settings") - 1) : orxMAX(Settings - 1, 0);
+        if (NewSettings != Settings)
+        {
+            Settings = NewSettings;
+            ApplySettings();
+        }
+    }
 
     // Get cell positions
     orxVECTOR CellPos, PreviousCellPos;
@@ -174,6 +202,10 @@ orxSTATUS orxFASTCALL Init()
 
     // Create the scene
     orxObject_CreateFromConfig("Scene");
+
+    // Init settings
+    Settings = 1;
+    ApplySettings();
 
     // Register the Update function to the core clock
     orxClock_Register(orxClock_Get(orxCLOCK_KZ_CORE), Update, orxNULL, orxMODULE_ID_MAIN, orxCLOCK_PRIORITY_NORMAL);
