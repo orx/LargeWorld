@@ -204,7 +204,7 @@ orxSTATUS orxFASTCALL Init()
     orxObject_CreateFromConfig("Scene");
 
     // Init settings
-    Settings = 1;
+    Settings = orxConfig_GetListCount("Settings") / 2;
     ApplySettings();
 
     // Register the Update function to the core clock
