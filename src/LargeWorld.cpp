@@ -35,6 +35,7 @@ void orxFASTCALL ApplySettings()
         orxObject_Delete(Cell);
     }
     orxHashTable_Clear(WorldTable);
+    orxObject_CreateFromConfig("ClearSnap");
 }
 
 /** Update function, it has been registered to be called every tick of the core clock
@@ -134,21 +135,24 @@ void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
     // Snapshot?
     if(orxInput_HasBeenActivated("Snap"))
     {
-        // Enable its viewport
-        orxViewport_Enable(orxViewport_Get("SnapViewport"), orxTRUE);
+        // Create its viewport
+        orxViewport_CreateFromConfig("SnapViewport");
 
         // Store position
         orxConfig_PushSection("Runtime");
         orxConfig_SetVector("SnapPos", &PreviousCameraPos);
         orxConfig_PopSection();
 
-        // Create flash
-        orxObject_CreateFromConfig("Flash");
+        // Create snapshot
+        orxObject_CreateFromConfig("Snapshot");
     }
     else
     {
-        // Disable its viewport
-        orxViewport_Enable(orxViewport_Get("SnapViewport"), orxFALSE);
+        // Delete its viewport
+        if(orxViewport_Get("SnapViewport"))
+        {
+            orxViewport_Delete(orxViewport_Get("SnapViewport"));
+        }
 
         // Recall?
         if(orxInput_HasBeenActivated("Recall"))
@@ -185,9 +189,8 @@ static orxSTATUS orxFASTCALL EventHandler(const orxEVENT *_pstEvent)
  */
 orxSTATUS orxFASTCALL Init()
 {
-    // Create the viewports
+    // Create the viewport
     orxViewport_CreateFromConfig("MainViewport");
-    orxViewport_Enable(orxViewport_CreateFromConfig("SnapViewport"), orxFALSE);
 
     // Sets default config section to "World"
     orxConfig_PushSection("World");
