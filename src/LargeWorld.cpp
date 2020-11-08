@@ -35,7 +35,6 @@ void orxFASTCALL ApplySettings()
         orxObject_Delete(Cell);
     }
     orxHashTable_Clear(WorldTable);
-    orxObject_CreateFromConfig("ClearSnap");
 }
 
 /** Update function, it has been registered to be called every tick of the core clock
@@ -67,6 +66,8 @@ void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
         {
             Settings = NewSettings;
             ApplySettings();
+            orxObject_CreateFromConfig("ClearSnap");
+            orxVector_Copy(&PreviousCameraPos, &CameraPos);
         }
     }
 
@@ -118,7 +119,7 @@ void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
         }
     }
 
-    // Update previous  camera position
+    // Update previous camera position
     orxVector_Copy(&PreviousCameraPos, &CameraPos);
 
     // Zoom Out?
