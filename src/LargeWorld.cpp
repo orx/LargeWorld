@@ -21,20 +21,17 @@ extern "C"
 
 #endif // __orxWINDOWS__
 
+static orxU64 Universe = 0;
+
 /** Apply settings
  */
 void orxFASTCALL ApplySettings()
 {
-    orxOBJECT *Cell;
     orxConfig_SetParent("World", orxConfig_GetListString("Settings", Settings));
     orxConfig_GetString("UpdateSettings");
-    for(orxHANDLE Iterator = orxHashTable_GetNext(WorldTable, orxHANDLE_UNDEFINED, orxNULL, (void **)&Cell);
-        Iterator != orxHANDLE_UNDEFINED;
-        Iterator = orxHashTable_GetNext(WorldTable, Iterator, orxNULL, (void **)&Cell))
-    {
-        orxObject_Delete(Cell);
-    }
     orxHashTable_Clear(WorldTable);
+    orxObject_Delete(orxOBJECT(orxStructure_Get(Universe)));
+    Universe = orxStructure_GetGUID(orxObject_CreateFromConfig("Universe"));
 }
 
 /** Update function, it has been registered to be called every tick of the core clock
@@ -91,6 +88,8 @@ void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
                 // Create new node
                 orxVECTOR Pos;
                 Cell = orxObject_CreateFromConfig("Cell");
+                orxObject_SetParent(Cell, orxOBJECT(orxStructure_Get(Universe)));
+                orxObject_SetOwner(Cell, orxOBJECT(orxStructure_Get(Universe)));
                 orxObject_SetPosition(Cell, orxVector_Set(&Pos, CellSize * orxS2F(x), CellSize * orxS2F(y), orxFLOAT_0));
                 orxHashTable_Add(WorldTable, CellID, (void *)Cell);
             }
@@ -203,6 +202,9 @@ orxSTATUS orxFASTCALL Init()
     Camera = orxObject_CreateFromConfig("Camera");
     orxCamera_SetParent(orxCamera_Get("MainCamera"), Camera);
     orxObject_GetPosition(Camera, &PreviousCameraPos);
+
+    // Create universe
+    Universe = orxStructure_GetGUID(orxObject_CreateFromConfig("Universe"));
 
     // Create the scene
     orxObject_CreateFromConfig("Scene");
