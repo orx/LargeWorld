@@ -5,11 +5,6 @@
 
 #include "orx.h"
 
-orxVECTOR     PreviousCameraPos;
-orxOBJECT    *Camera;
-orxHASHTABLE *WorldTable;
-orxS32        Settings;
-
 // Ask for dedicated GPU, if present
 #ifdef __orxWINDOWS__
 
@@ -21,7 +16,11 @@ extern "C"
 
 #endif // __orxWINDOWS__
 
-static orxU64 Universe = 0;
+static orxVECTOR        PreviousCameraPos;
+static orxOBJECT       *Camera;
+static orxHASHTABLE    *WorldTable;
+static orxS32           Settings;
+static orxU64           Universe;
 
 /** Apply settings
  */
@@ -88,8 +87,6 @@ void orxFASTCALL Update(const orxCLOCK_INFO *_pstClockInfo, void *_pContext)
                 // Create new node
                 orxVECTOR Pos;
                 Cell = orxObject_CreateFromConfig("Cell");
-                orxObject_SetParent(Cell, orxOBJECT(orxStructure_Get(Universe)));
-                orxObject_SetOwner(Cell, orxOBJECT(orxStructure_Get(Universe)));
                 orxObject_SetPosition(Cell, orxVector_Set(&Pos, CellSize * orxS2F(x), CellSize * orxS2F(y), orxFLOAT_0));
                 orxHashTable_Add(WorldTable, CellID, (void *)Cell);
             }
@@ -200,7 +197,6 @@ orxSTATUS orxFASTCALL Init()
 
     // Init the camera
     Camera = orxObject_CreateFromConfig("Camera");
-    orxCamera_SetParent(orxCamera_Get("MainCamera"), Camera);
     orxObject_GetPosition(Camera, &PreviousCameraPos);
 
     // Create universe
