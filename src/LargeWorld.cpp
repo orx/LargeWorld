@@ -232,6 +232,9 @@ orxSTATUS orxFASTCALL Run()
  */
 void orxFASTCALL Exit()
 {
+    // Deletes world table
+    orxHashTable_Delete(WorldTable);
+
     // Let Orx clean all our mess automatically. :)
 }
 
