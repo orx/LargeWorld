@@ -5,6 +5,10 @@
 
 #include "orx.h"
 
+#define orxBUNDLE_IMPL
+#include "orxBundle.h"
+#undef orxBUNDLE_IMPL
+
 // Ask for dedicated GPU, if present
 #ifdef __orxWINDOWS__
 
@@ -232,6 +236,8 @@ orxSTATUS orxFASTCALL Run()
  */
 void orxFASTCALL Exit()
 {
+    orxBundle_Exit();
+
     // Deletes world table
     orxHashTable_Delete(WorldTable);
 
@@ -242,7 +248,11 @@ void orxFASTCALL Exit()
  */
 orxSTATUS orxFASTCALL Bootstrap()
 {
+    orxBundle_Init();
+
     // Add a config storage to find the initial config file
+    orxResource_AddStorage(orxCONFIG_KZ_RESOURCE_GROUP, orxBUNDLE_KZ_RESOURCE_STORAGE, orxFALSE);
+    orxResource_AddStorage(orxCONFIG_KZ_RESOURCE_GROUP, orxBUNDLE_KZ_RESOURCE_STORAGE "LargeWorld.obr", orxFALSE);
     orxResource_AddStorage(orxCONFIG_KZ_RESOURCE_GROUP, "../data/config", orxFALSE);
 
     // Return orxSTATUS_FAILURE to prevent orx from loading the default config file
