@@ -4,21 +4,16 @@
  */
 
 #include "orx.h"
-
-#define orxBUNDLE_IMPL
-#include "orxBundle.h"
-#undef orxBUNDLE_IMPL
+#include "orxExtensions.h"
 
 // Ask for dedicated GPU, if present
-#ifdef __orxWINDOWS__
+#ifdef __orxMSVC__
 
-extern "C"
-{
-  _declspec(dllexport) orxU32 NvOptimusEnablement                   = 1;
-  _declspec(dllexport) orxU32 AmdPowerXpressRequestHighPerformance  = 1;
-}
+/* Requesting high performance dedicated GPU on hybrid laptops */
+__declspec(dllexport) unsigned long NvOptimusEnablement        = 1;
+__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 
-#endif // __orxWINDOWS__
+#endif // __orxMSVC__
 
 static orxVECTOR        PreviousCameraPos;
 static orxOBJECT       *Camera;
@@ -190,6 +185,9 @@ static orxSTATUS orxFASTCALL EventHandler(const orxEVENT *_pstEvent)
  */
 orxSTATUS orxFASTCALL Init()
 {
+    // Init extensions
+    InitExtensions();
+
     // Create the viewport
     orxViewport_CreateFromConfig("MainViewport");
 
@@ -236,7 +234,8 @@ orxSTATUS orxFASTCALL Run()
  */
 void orxFASTCALL Exit()
 {
-    orxBundle_Exit();
+    // Exit from extensions
+    ExitExtensions();
 
     // Deletes world table
     orxHashTable_Delete(WorldTable);
@@ -248,12 +247,8 @@ void orxFASTCALL Exit()
  */
 orxSTATUS orxFASTCALL Bootstrap()
 {
-    orxBundle_Init();
-
-    // Add a config storage to find the initial config file
-    orxResource_AddStorage(orxCONFIG_KZ_RESOURCE_GROUP, orxBUNDLE_KZ_RESOURCE_STORAGE, orxFALSE);
-    orxResource_AddStorage(orxCONFIG_KZ_RESOURCE_GROUP, orxBUNDLE_KZ_RESOURCE_STORAGE "LargeWorld.obr", orxFALSE);
-    orxResource_AddStorage(orxCONFIG_KZ_RESOURCE_GROUP, "../data/config", orxFALSE);
+    // Bootstrap extensions
+    BootstrapExtensions();
 
     // Return orxSTATUS_FAILURE to prevent orx from loading the default config file
     return orxSTATUS_SUCCESS;

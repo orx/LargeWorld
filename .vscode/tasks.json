@@ -1,0 +1,197 @@
+{
+  "version": "2.0.0",
+  "presentation": {
+    "reveal": "always",
+    "revealProblems": "onProblem"
+  },
+  "type": "shell",
+  "linux": {
+    "options": {
+      "cwd": "build/linux/gmake/",
+      "problemMatcher": {
+        "base": "$gcc",
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}/build/linux/gmake/"
+        ]
+      }
+    }
+  },
+  "osx": {
+    "options": {
+      "cwd": "build/mac/gmake/",
+      "problemMatcher": {
+        "base": "$gcc",
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}/build/mac/gmake/"
+        ]
+      }
+    }
+  },
+  "windows": {
+    "options": {
+      "cwd": "build/windows/gmake/",
+      "shell": {
+        "executable": "cmd.exe",
+        "args": [
+          "/d",
+          "/c"
+        ]
+      },
+      "problemMatcher": {
+        "base": "$gcc",
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}/build/windows/gmake/"
+        ]
+      }
+    }
+  },
+  "tasks": [
+    {
+      "label": "Refresh LargeWorld project files",
+      "group": "build",
+      "type": "shell",
+      "command": "./premake4",
+      "windows": {
+        "command": "premake4.exe gmake"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}/build/"
+      }
+    },
+    {
+      "label": "Build LargeWorld (debug, profile, release)",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Build LargeWorld (debug)",
+        "Build LargeWorld (profile)",
+        "Build LargeWorld (release)"
+      ],
+      "problemMatcher": "$gcc"
+    },
+    {
+      "label": "Build LargeWorld (debug)",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "linux": {
+        "command": "make -j config=debug64",
+      },
+      "osx": {
+        "command": "make -j config=debuguniv64"
+      },
+      "windows": {
+        "command": "mingw32-make.exe -j config=debug64"
+      }
+    },
+    {
+      "label": "Build LargeWorld (profile)",
+      "group": "build",
+      "type": "shell",
+      "linux": {
+        "command": "make -j config=profile64"
+      },
+      "osx": {
+        "command": "make -j config=profileuniv64"
+      },
+      "windows": {
+        "command": "mingw32-make.exe -j config=profile64"
+      }
+    },
+    {
+      "label": "Build LargeWorld (release)",
+      "group": "build",
+      "type": "shell",
+      "linux": {
+        "command": "make -j config=release64"
+      },
+      "osx": {
+        "command": "make -j config=releaseuniv64"
+      },
+      "windows": {
+        "command": "mingw32-make.exe -j config=release64"
+      }
+    },
+    {
+      "label": "Build LargeWorld (web)",
+      "dependsOn": [
+        "Build LargeWorld (release)"
+      ],
+      "group": "build",
+      "type": "shell",
+      "command": "emmake make -j config=releaseweb",
+    },
+    {
+      "label": "Run LargeWorld (debug)",
+      "dependsOn": [
+        "Build LargeWorld (debug)"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "type": "process",
+      "command": "LargeWorldd",
+      "windows": {
+        "command": "LargeWorldd.exe"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}/bin/"
+      }
+    },
+    {
+      "label": "Run LargeWorld (profile)",
+      "dependsOn": [
+        "Build LargeWorld (profile)"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "type": "process",
+      "command": "LargeWorldp",
+      "windows": {
+        "command": "LargeWorldp.exe"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}/bin/"
+      }
+    },
+    {
+      "label": "Run LargeWorld (release)",
+      "dependsOn": [
+        "Build LargeWorld (release)"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "type": "process",
+      "command": "LargeWorld",
+      "windows": {
+        "command": "LargeWorld.exe"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}/bin/"
+      }
+    },
+    {
+      "label": "Run LargeWorld (web)",
+      "dependsOn": [
+        "Build LargeWorld (web)"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "type": "shell",
+      "command": "emrun LargeWorld.html",
+      "options": {
+        "cwd": "${workspaceFolder}/bin/web/"
+      }
+    }
+  ]
+}
