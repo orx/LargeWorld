@@ -191,7 +191,7 @@ orxSTATUS orxFASTCALL Init()
     // Create the viewport
     orxViewport_CreateFromConfig("MainViewport");
 
-    // Sets default config section to "World"
+    // Set default config section to "World"
     orxConfig_PushSection("World");
 
     // Init our world

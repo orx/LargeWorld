@@ -148,7 +148,7 @@ solution "LargeWorld"
         kind ("WindowedApp")
 
     configuration {"web"}
-        targetextension ".html"
+        targetextension ".js"
         targetsuffix ""
         targetdir "../bin/web"
         buildoptions
