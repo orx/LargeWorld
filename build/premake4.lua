@@ -154,6 +154,8 @@ solution "LargeWorld"
         buildoptions
         {
             "-DorxWEB_EXECUTABLE_NAME='\"LargeWorld.wasm\"'",
+            "-Wno-undefined-var-template",
+            "--use-port=contrib.glfw3",
             "-pthread"
         }
         linkoptions
@@ -162,25 +164,22 @@ solution "LargeWorld"
             "-sPTHREAD_POOL_SIZE=navigator.hardwareConcurrency",
             "-sAUDIO_WORKLET=1",
             "-sWASM_WORKERS=1",
+            "-sSTACK_SIZE=1048576",
             "-sASYNCIFY",
             "-sALLOW_MEMORY_GROWTH",
             "-sFULL_ES3=1",
+            "--use-port=contrib.glfw3",
             "-pthread",
-            "-lidbfs.js",
-            "$(ORX)/../extern/emscripten-glfw/lib/libglfw3.a",
-            "--js-library $(ORX)/../extern/emscripten-glfw/lib/lib_emscripten_glfw3.js"
+            "-lidbfs.js"
         }
         links
         {
-            "basisu",
             "webpdecoder",
             "liquidfun"
         }
         includedirs {"$(ORX)/include"}
         libdirs {
             "$(ORX)/lib/static/web",
-            "$(ORX)/../extern/emscripten-glfw/lib",
-            "$(ORX)/../extern/basisu/lib/web",
             "$(ORX)/../extern/libwebp/lib/web",
             "$(ORX)/../extern/LiquidFun-1.1.0/lib/web"
         }
